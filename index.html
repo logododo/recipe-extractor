@@ -238,7 +238,7 @@ Text: ${caption}`;
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -249,6 +249,7 @@ Text: ${caption}`;
     );
 
     const data = await response.json();
+    console.log('API Response:', JSON.stringify(data))
     const text = data.candidates[0].content.parts[0].text;
     const json = JSON.parse(text.replace(/```json|```/g, '').trim());
 
@@ -275,7 +276,8 @@ Text: ${caption}`;
 
     result.style.display = 'block';
   } catch (e) {
-    showError('Fehler beim Abrufen. Prüfe deinen API Key und versuche es erneut.');
+    showError('Fehler: ' + e.message);
+    console.error(e);
   }
 
   btn.disabled = false;
