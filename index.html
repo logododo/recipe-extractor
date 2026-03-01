@@ -1,14 +1,288 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Extractor</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🍽️ Recipe Extractor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ff6b35, #f7c59f, #ff4e91);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 16px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 36px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #ff6b35;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: #888;
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    label {
+      font-weight: 600;
+      color: #333;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #f0f0f0;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s;
+      margin-bottom: 16px;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      border-color: #ff6b35;
+    }
+
+    textarea {
+      height: 130px;
+      resize: vertical;
+    }
+
+    .api-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .api-row input {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #ff6b35, #ff4e91);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.9; transform: scale(1.01); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .loader {
+      display: none;
+      text-align: center;
+      margin-top: 24px;
+      color: #ff6b35;
+      font-weight: 600;
+    }
+
+    .result {
+      display: none;
+      margin-top: 28px;
+    }
+
+    .result h2 {
+      font-size: 1.4rem;
+      color: #333;
+      margin-bottom: 16px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tag {
+      background: #fff3ee;
+      color: #ff6b35;
+      border: 1.5px solid #ff6b35;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .steps { list-style: none; }
+
+    .steps li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .step-num {
+      background: linear-gradient(135deg, #ff6b35, #ff4e91);
+      color: white;
+      border-radius: 50%;
+      min-width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .step-text {
+      color: #444;
+      line-height: 1.6;
+      padding-top: 4px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 2px solid #f5f5f5;
+      margin: 24px 0;
+    }
+
+    .error {
+      color: #e03e3e;
+      background: #fff0f0;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 16px;
+      display: none;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 <body>
-    <h1>🍽️ Recipe Extractor</h1>
-    <p>Füge einen Instagram-Link ein:</p>
-    <input type="text" placeholder="https://www.instagram.com/p/..." />
-    <button>Rezept laden</button>
-</body>
-</html>
+<div class="container">
+  <h1>🍽️ Recipe Extractor</h1>
+  <p class="subtitle">Füge einen Instagram-Link und die Beschreibung ein – die KI erledigt den Rest!</p>
+
+  <label>🔑 Gemini API Key</label>
+  <div class="api-row">
+    <input type="text" id="apiKey" placeholder="AIza..." />
+  </div>
+
+  <label>🔗 Instagram-Link</label>
+  <input type="text" id="igLink" placeholder="https://www.instagram.com/p/..." />
+
+  <label>📋 Beschreibung / Caption des Posts</label>
+  <textarea id="caption" placeholder="Füge hier die Beschreibung oder den Text des Instagram-Posts ein..."></textarea>
+
+  <button id="extractBtn" onclick="extractRecipe()">✨ Rezept extrahieren</button>
+
+  <div class="loader" id="loader">⏳ KI analysiert das Rezept...</div>
+  <div class="error" id="error"></div>
+
+  <div class="result" id="result">
+    <hr class="divider"/>
+    <h2 id="recipeTitle"></h2>
+
+    <label>🛒 Zutaten</label>
+    <div class="tags" id="ingredients"></div>
+
+    <label>👩‍🍳 Zubereitung</label>
+    <ul class="steps" id="steps"></ul>
+  </div>
+</div>
+
+<script>
+async function extractRecipe() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const caption = document.getElementById('caption').value.trim();
+  const btn = document.getElementById('extractBtn');
+  const loader = document.getElementById('loader');
+  const error = document.getElementById('error');
+  const result = document.getElementById('result');
+
+  error.style.display = 'none';
+  result.style.display = 'none';
+
+  if (!apiKey) return showError('Bitte gib deinen Gemini API Key ein.');
+  if (!caption) return showError('Bitte füge die Beschreibung des Instagram-Posts ein.');
+
+  btn.disabled = true;
+  loader.style.display = 'block';
+
+  const prompt = `Du bist ein Rezept-Assistent. Analysiere den folgenden Text und extrahiere das Rezept.
+Antworte NUR mit einem validen JSON-Objekt in diesem Format:
+{
+  "title": "Rezeptname",
+  "ingredients": ["Zutat 1", "Zutat 2", "Zutat 3"],
+  "steps": ["Schritt 1", "Schritt 2", "Schritt 3"]
+}
+
+Text: ${caption}`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      }
+    );
+
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text;
+    const json = JSON.parse(text.replace(/```json|```/g, '').trim());
+
+    document.getElementById('recipeTitle').textContent = json.title;
+
+    const ingDiv = document.getElementById('ingredients');
+    ingDiv.innerHTML = '';
+    json.ingredients.forEach(i => {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = i;
+      ingDiv.appendChild(tag);
+    });
+
+    const stepsList = document.getElementById('steps');
+    stepsList.innerHTML = '';
+    json.steps.forEach((s, idx) => {
+      stepsList.innerHTML += `
+        <li>
+          <div class="step-num">${idx + 1}</div>
+          <div class="step-text">${s}</div>
+        </li>`;
+    });
+
+    result.style.display = 'block';
+  } catch (e) {
+    showError('Fehler beim Abrufen. Prüfe deinen API Key und versuche es erneut.');
+  }
+
+  btn.disabled = false;
+  loader.style.display = 'none';
+}
+
+function showError(msg) {
+  const error = document.getElementById('error');
+  error.textContent = msg;
+  error.style.display = 'block';
+  document.getElementById('extractBtn').disabled =
