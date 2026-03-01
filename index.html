@@ -285,4 +285,9 @@ function showError(msg) {
   const error = document.getElementById('error');
   error.textContent = msg;
   error.style.display = 'block';
-  document.getElementById('extractBtn').disabled =
+  document.getElementById('extractBtn').disabled = false;
+  document.getElementById('loader').style.display = 'none';
+}
+</script>
+</body>
+</html>
